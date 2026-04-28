@@ -1,45 +1,60 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { UrlTable } from "@/components/dashboard/url-table";
+import { useCallback, useEffect, useState } from "react";
+import { AdminUrlTable, type AdminUrlRow } from "@/components/admin/admin-url-table";
 import { apiRequest } from "@/lib/api-client";
 import { useAuthStore } from "@/store/auth.store";
 
 type AdminUrlsResponse = {
-  items: Array<{
-    id: string;
-    ownerId: string;
-    shortCode: string;
-    originalUrl: string;
-    status: string;
-    clickCount: number;
-    createdAt: string;
-  }>;
+  items: AdminUrlRow[];
 };
 
 export default function AdminUrlsPage() {
   const token = useAuthStore((state) => state.accessToken);
-  const [items, setItems] = useState<AdminUrlsResponse["items"]>([]);
+  const [items, setItems] = useState<AdminUrlRow[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+
+  const load = useCallback(async () => {
+    if (!token) return;
+    setLoading(true);
+    setError("");
+    try {
+      const data = await apiRequest<AdminUrlsResponse>("/admin/urls?page=1&limit=50", { token });
+      setItems(data.items);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Failed to load URLs");
+    } finally {
+      setLoading(false);
+    }
+  }, [token]);
 
   useEffect(() => {
-    const run = async () => {
-      if (!token) return;
-      setLoading(true);
-      try {
-        const data = await apiRequest<AdminUrlsResponse>("/admin/urls?page=1&limit=50", { token });
-        setItems(data.items);
-      } finally {
-        setLoading(false);
-      }
-    };
-    void run();
-  }, [token]);
+    void load();
+  }, [load]);
 
   return (
     <section className="space-y-4">
-      <h1 className="text-2xl font-semibold">All URLs</h1>
-      {loading ? <p>Loading...</p> : <UrlTable items={items} />}
+      <div>
+        <h1 className="text-2xl font-semibold text-white">All URLs</h1>
+        <p className="mt-2 max-w-2xl text-sm text-slate-400">
+          Pause links to block redirects (visitors see a paused response), activate when safe again, or delete
+          to remove the short link permanently. Owners receive email notifications when status changes.
+        </p>
+      </div>
+      {error ? <p className="text-sm text-red-400">{error}</p> : null}
+      {loading ? <p className="text-slate-400">Loading...</p> : null}
+      {!loading && items.length === 0 && !error ? (
+        <p className="text-slate-400">No URLs yet.</p>
+      ) : null}
+      {!loading && token && items.length > 0 ? (
+        <AdminUrlTable
+          items={items}
+          onAfterMutation={load}
+          onError={setError}
+          token={token}
+        />
+      ) : null}
     </section>
   );
 }

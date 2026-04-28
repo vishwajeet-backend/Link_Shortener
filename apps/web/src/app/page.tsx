@@ -1,8 +1,10 @@
 "use client";
 
 import Link from "next/link";
-import { FormEvent, useMemo, useState } from "react";
+import { FormEvent, useState } from "react";
 import { useRouter } from "next/navigation";
+import { SiteFooter } from "@/components/marketing/site-footer";
+import { SiteHeader } from "@/components/marketing/site-header";
 import { apiRequest } from "@/lib/api-client";
 import { useAuthStore } from "@/store/auth.store";
 
@@ -62,11 +64,6 @@ export default function HomePage() {
   const [error, setError] = useState<string | null>(null);
   const [created, setCreated] = useState<CreatedUrl | null>(null);
 
-  const appTagline = useMemo(
-    () => "The enterprise-grade URL shortener built for modern growth teams.",
-    []
-  );
-
   const onShorten = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     setError(null);
@@ -99,49 +96,34 @@ export default function HomePage() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-indigo-50 via-white to-slate-100 text-slate-900">
-      <header className="sticky top-0 z-20 border-b border-slate-200/70 bg-white/90 backdrop-blur">
-        <nav className="mx-auto flex max-w-7xl items-center justify-between px-4 py-3 md:px-8">
-          <Link className="text-lg font-bold text-indigo-700" href="/">
-            PurpleMerit Links
-          </Link>
-          <div className="hidden items-center gap-5 text-sm text-slate-600 md:flex">
-            <a href="#home">Home</a>
-            <a href="#features">Features</a>
-            <a href="#about">About</a>
-            <Link className="font-medium text-slate-800" href="/login">
-              Login
-            </Link>
-            <Link className="rounded-md bg-indigo-600 px-4 py-2 font-medium text-white" href="/register">
-              Signup
-            </Link>
-          </div>
-        </nav>
-      </header>
-
+    <div className="min-h-screen bg-slate-950 text-slate-100">
+      <SiteHeader />
       <main id="home" className="mx-auto max-w-7xl px-4 pb-16 pt-10 md:px-8 md:pt-16">
-        <section className="grid items-center gap-8 md:grid-cols-2">
+        <section className="grid items-center gap-10 md:grid-cols-2">
           <div>
-            <p className="mb-3 inline-block rounded-full bg-indigo-100 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-indigo-700">
+            <p className="mb-3 inline-block rounded-full bg-indigo-950/60 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-indigo-300">
               Trusted by teams and creators
             </p>
-            <h1 className="text-4xl font-bold leading-tight md:text-5xl">
+            <h1 className="text-4xl font-extrabold leading-tight text-white md:text-6xl">
               Shorten, secure, and scale your links globally.
             </h1>
-            <p className="mt-4 max-w-xl text-slate-600">{appTagline}</p>
+            <p className="mt-4 max-w-xl text-slate-300">
+              A bold SaaS platform inspired by modern link products with analytics, admin controls,
+              and enterprise-grade reliability.
+            </p>
             <div className="mt-6 flex flex-wrap gap-3">
-              <Link className="rounded-md bg-indigo-600 px-5 py-2.5 text-sm font-semibold text-white" href="/register">
+              <Link className="rounded-xl bg-indigo-600 px-5 py-2.5 text-sm font-semibold text-white hover:bg-indigo-500" href="/register">
                 Start for free
               </Link>
-              <Link className="rounded-md border border-slate-300 px-5 py-2.5 text-sm font-semibold" href="/login">
+              <Link className="rounded-xl border border-slate-600 px-5 py-2.5 text-sm font-semibold text-slate-200 hover:bg-slate-900" href="/login">
                 Go to dashboard
               </Link>
             </div>
           </div>
 
-          <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm md:p-6">
-            <h2 className="text-lg font-semibold">Shorten URL instantly</h2>
-            <p className="mb-4 mt-1 text-sm text-slate-500">
+          <div className="rounded-3xl border border-slate-800 bg-slate-900/70 p-5 shadow-2xl md:p-6">
+            <h2 className="text-lg font-semibold text-white">Shorten URL instantly</h2>
+            <p className="mb-4 mt-1 text-sm text-slate-300">
               {user ? `Welcome ${user.name}. Create your next short link.` : "Paste your long URL and create a short link."}
             </p>
             <form className="space-y-3" onSubmit={onShorten}>
@@ -164,28 +146,37 @@ export default function HomePage() {
             </form>
             {error ? <p className="mt-3 text-sm text-rose-600">{error}</p> : null}
             {created ? (
-              <div className="mt-4 rounded-lg border border-emerald-200 bg-emerald-50 p-3">
-                <p className="text-sm font-semibold text-emerald-800">Short URL created</p>
-                <p className="mt-1 break-all text-sm">{created.shortUrl}</p>
+              <div className="mt-4 rounded-lg border border-emerald-700 bg-emerald-950/30 p-3">
+                <p className="text-sm font-semibold text-emerald-300">Short URL created</p>
+                <p className="mt-1 break-all text-sm text-emerald-100">{created.shortUrl}</p>
               </div>
             ) : null}
           </div>
         </section>
 
-        <section className="mt-14 rounded-2xl border border-indigo-100 bg-indigo-50/60 p-6 text-center md:mt-20">
-          <h3 className="text-2xl font-semibold">Why teams choose PurpleMerit Links</h3>
-          <p className="mx-auto mt-2 max-w-3xl text-slate-600">
+        <section className="mt-12 overflow-hidden rounded-3xl border border-slate-800 bg-slate-900 md:mt-16">
+          <img
+            alt="People collaborating on growth analytics dashboard"
+            className="h-56 w-full object-cover md:h-80"
+            loading="lazy"
+            src="https://images.unsplash.com/photo-1552664730-d307ca884978?q=80&w=1600&auto=format&fit=crop"
+          />
+        </section>
+
+        <section className="mt-14 rounded-2xl border border-indigo-900/40 bg-indigo-950/20 p-6 text-center md:mt-20">
+          <h3 className="text-2xl font-semibold text-white">Why teams choose PurpleMerit Links</h3>
+          <p className="mx-auto mt-2 max-w-3xl text-slate-300">
             Reliable redirects, deep analytics, and admin controls designed for growth-stage SaaS teams.
           </p>
         </section>
 
         <section className="mt-12" id="features">
-          <h3 className="text-2xl font-semibold md:text-3xl">Powerful features for modern campaigns</h3>
+          <h3 className="text-2xl font-semibold text-white md:text-3xl">Powerful features for modern campaigns</h3>
           <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {featureCards.map((feature) => (
-              <article className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm" key={feature.title}>
-                <h4 className="font-semibold text-slate-900">{feature.title}</h4>
-                <p className="mt-2 text-sm text-slate-600">{feature.description}</p>
+              <article className="rounded-2xl border border-slate-800 bg-slate-900 p-5 shadow-sm" key={feature.title}>
+                <h4 className="font-semibold text-white">{feature.title}</h4>
+                <p className="mt-2 text-sm text-slate-300">{feature.description}</p>
               </article>
             ))}
           </div>
@@ -197,37 +188,26 @@ export default function HomePage() {
             "Share the short link across channels instantly.",
             "Track engagement and manage safety from dashboard."
           ].map((step, index) => (
-            <div className="rounded-xl border border-slate-200 bg-white p-5" key={step}>
+            <div className="rounded-2xl border border-slate-800 bg-slate-900 p-5" key={step}>
               <p className="text-sm font-semibold text-indigo-600">Step {index + 1}</p>
-              <p className="mt-2 text-sm text-slate-700">{step}</p>
+              <p className="mt-2 text-sm text-slate-200">{step}</p>
             </div>
           ))}
         </section>
 
         <section className="mt-14">
-          <h3 className="text-2xl font-semibold md:text-3xl">Frequently asked questions</h3>
+          <h3 className="text-2xl font-semibold text-white md:text-3xl">Frequently asked questions</h3>
           <div className="mt-5 space-y-3">
             {faqItems.map((item) => (
-              <details className="rounded-xl border border-slate-200 bg-white p-4" key={item.q}>
+              <details className="rounded-xl border border-slate-800 bg-slate-900 p-4" key={item.q}>
                 <summary className="cursor-pointer font-medium">{item.q}</summary>
-                <p className="mt-2 text-sm text-slate-600">{item.a}</p>
+                <p className="mt-2 text-sm text-slate-300">{item.a}</p>
               </details>
             ))}
           </div>
         </section>
       </main>
-
-      <footer className="border-t border-slate-200 bg-white">
-        <div className="mx-auto flex max-w-7xl flex-col gap-4 px-4 py-8 text-sm text-slate-500 md:flex-row md:items-center md:justify-between md:px-8">
-          <p>© {new Date().getFullYear()} PurpleMerit Links. All rights reserved.</p>
-          <div className="flex gap-4">
-            <a href="#features">Features</a>
-            <a href="#about">About</a>
-            <Link href="/login">Login</Link>
-            <Link href="/register">Signup</Link>
-          </div>
-        </div>
-      </footer>
+      <SiteFooter />
     </div>
   );
 }

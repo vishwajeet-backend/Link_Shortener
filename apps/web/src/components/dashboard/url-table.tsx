@@ -15,10 +15,10 @@ export const UrlTable = ({ items }: { items: UrlItem[] }) => {
     <>
       <div className="space-y-3 md:hidden">
         {items.map((item) => (
-          <article className="rounded border bg-white p-3 text-sm" key={item.id}>
+          <article className="rounded-xl border border-slate-800 bg-slate-900 p-3 text-sm" key={item.id}>
             <p className="font-medium">{item.shortUrl ?? item.shortCode}</p>
-            <p className="mt-1 break-all text-slate-600">{item.originalUrl}</p>
-            <div className="mt-2 flex flex-wrap gap-2 text-xs text-slate-500">
+            <p className="mt-1 break-all text-slate-300">{item.originalUrl}</p>
+            <div className="mt-2 flex flex-wrap gap-2 text-xs text-slate-400">
               <span>Status: {item.status}</span>
               <span>Clicks: {item.clickCount}</span>
               <span>{new Date(item.createdAt).toLocaleDateString()}</span>
@@ -26,9 +26,9 @@ export const UrlTable = ({ items }: { items: UrlItem[] }) => {
           </article>
         ))}
       </div>
-      <div className="hidden overflow-x-auto rounded border bg-white md:block">
+      <div className="hidden overflow-x-auto rounded-xl border border-slate-800 bg-slate-900 md:block">
         <table className="min-w-full text-left text-sm">
-        <thead className="bg-slate-100">
+        <thead className="bg-slate-800/80">
           <tr>
             <th className="px-3 py-2">Short</th>
             <th className="px-3 py-2">Original URL</th>
@@ -41,7 +41,7 @@ export const UrlTable = ({ items }: { items: UrlItem[] }) => {
           {items.map((item) => (
             <tr className="border-t" key={item.id}>
               <td className="px-3 py-2">{item.shortUrl ?? item.shortCode}</td>
-              <td className="max-w-sm truncate px-3 py-2">{item.originalUrl}</td>
+              <td className="max-w-sm truncate px-3 py-2 text-slate-300">{item.originalUrl}</td>
               <td className="px-3 py-2">{item.status}</td>
               <td className="px-3 py-2">{item.clickCount}</td>
               <td className="px-3 py-2">{new Date(item.createdAt).toLocaleString()}</td>

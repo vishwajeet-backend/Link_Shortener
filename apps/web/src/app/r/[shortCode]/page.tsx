@@ -25,11 +25,11 @@ const ResolveErrorPage = ({
   description: string;
 }) => (
   <main className="mx-auto flex min-h-screen max-w-xl flex-col items-center justify-center px-6 text-center">
-    <div className="rounded-2xl border border-slate-200 bg-white p-8 shadow-sm">
-      <h1 className="text-2xl font-semibold text-slate-900">{title}</h1>
-      <p className="mt-2 text-slate-600">{description}</p>
+    <div className="rounded-2xl border border-slate-800 bg-slate-900 p-8 shadow-sm">
+      <h1 className="text-2xl font-semibold text-white">{title}</h1>
+      <p className="mt-2 text-slate-300">{description}</p>
       <div className="mt-5">
-        <Link className="rounded-md bg-indigo-600 px-4 py-2 font-medium text-white" href="/">
+        <Link className="rounded-md bg-indigo-600 px-4 py-2 font-medium text-white hover:bg-indigo-500" href="/">
           Go to homepage
         </Link>
       </div>
