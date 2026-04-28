@@ -1,0 +1,17 @@
+{
+  "name": "link-shortener-monorepo",
+  "version": "1.0.0",
+  "private": true,
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "dev:api": "npm run dev --workspace @link-shortener/api",
+    "build:api": "npm run build --workspace @link-shortener/api",
+    "start:api": "npm run start --workspace @link-shortener/api",
+    "dev:web": "npm run dev --workspace @link-shortener/web",
+    "build:web": "npm run build --workspace @link-shortener/web",
+    "start:web": "npm run start --workspace @link-shortener/web"
+  }
+}
