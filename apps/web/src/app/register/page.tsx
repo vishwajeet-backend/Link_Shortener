@@ -4,6 +4,13 @@ import { FormEvent, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { GoogleButton } from "@/components/auth/google-button";
+import {
+  formButtonPrimaryClass,
+  formCardClass,
+  formFieldGroupClass,
+  formInputClass,
+  formLabelClass
+} from "@/components/ui/form-classes";
 import { getApiBaseUrl } from "@/lib/public-env";
 import { useAuthStore } from "@/store/auth.store";
 
@@ -21,13 +28,14 @@ export default function RegisterPage() {
     setLoading(true);
 
     const formData = new FormData(event.currentTarget);
+    const email = String(formData.get("email") ?? "");
     try {
       await register({
         name: String(formData.get("name") ?? ""),
-        email: String(formData.get("email") ?? ""),
+        email,
         password: String(formData.get("password") ?? "")
       });
-      router.push("/dashboard");
+      router.push(`/auth/verify-email?email=${encodeURIComponent(email)}`);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Register failed");
     } finally {
@@ -36,25 +44,55 @@ export default function RegisterPage() {
   };
 
   return (
-    <main className="grid min-h-screen md:grid-cols-2">
-      <section className="hidden bg-slate-900 md:block">
+    <main className="grid min-h-screen grid-cols-1 md:grid-cols-2">
+      <section className="relative hidden min-h-[40vh] bg-slate-900 md:block md:min-h-screen">
         <img
           alt="Team sharing links"
-          className="h-full w-full object-cover"
+          className="absolute inset-0 h-full w-full object-cover"
           loading="lazy"
           src="https://images.unsplash.com/photo-1551434678-e076c223a692?q=80&w=1600&auto=format&fit=crop"
         />
       </section>
-      <section className="mx-auto flex w-full max-w-md items-center px-6 py-10">
-        <div className="w-full rounded-2xl border border-slate-800 bg-slate-900 p-6">
-          <h1 className="mb-1 text-3xl font-bold text-white">Create account</h1>
+      <section className="mx-auto flex w-full max-w-md items-center px-4 py-10 sm:px-6">
+        <div className={`w-full ${formCardClass}`}>
+          <h1 className="mb-1 text-2xl font-bold text-white sm:text-3xl">Create account</h1>
           <p className="mb-6 text-sm text-slate-300">Start shortening and tracking links today.</p>
-          <form className="space-y-4" onSubmit={handleSubmit}>
-            <input name="name" placeholder="Full name" required />
-            <input name="email" type="email" placeholder="Email" required />
-            <input name="password" type="password" placeholder="Password" required />
+          <form className={formFieldGroupClass} onSubmit={handleSubmit}>
+            <div>
+              <label className={formLabelClass} htmlFor="register-name">
+                Full name
+              </label>
+              <input autoComplete="name" className={formInputClass} id="register-name" name="name" required />
+            </div>
+            <div>
+              <label className={formLabelClass} htmlFor="register-email">
+                Email
+              </label>
+              <input
+                autoComplete="email"
+                className={formInputClass}
+                id="register-email"
+                name="email"
+                type="email"
+                required
+              />
+            </div>
+            <div>
+              <label className={formLabelClass} htmlFor="register-password">
+                Password
+              </label>
+              <input
+                autoComplete="new-password"
+                className={formInputClass}
+                id="register-password"
+                name="password"
+                type="password"
+                minLength={8}
+                required
+              />
+            </div>
             {error ? <p className="text-sm text-red-400">{error}</p> : null}
-            <button className="w-full bg-indigo-600 text-white hover:bg-indigo-500" disabled={loading} type="submit">
+            <button className={formButtonPrimaryClass} disabled={loading} type="submit">
               {loading ? "Creating account..." : "Create account"}
             </button>
           </form>

@@ -4,6 +4,13 @@ import { FormEvent, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { GoogleButton } from "@/components/auth/google-button";
+import {
+  formButtonPrimaryClass,
+  formCardClass,
+  formFieldGroupClass,
+  formInputClass,
+  formLabelClass
+} from "@/components/ui/form-classes";
 import { getApiBaseUrl } from "@/lib/public-env";
 import { useAuthStore } from "@/store/auth.store";
 
@@ -13,6 +20,7 @@ export default function LoginPage() {
   const router = useRouter();
   const login = useAuthStore((state) => state.login);
   const user = useAuthStore((state) => state.user);
+  const [emailValue, setEmailValue] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
@@ -27,8 +35,9 @@ export default function LoginPage() {
 
     const formData = new FormData(event.currentTarget);
     try {
+      const email = String(formData.get("email") ?? "");
       await login({
-        email: String(formData.get("email") ?? ""),
+        email,
         password: String(formData.get("password") ?? "")
       });
       const role = useAuthStore.getState().user?.role;
@@ -41,27 +50,66 @@ export default function LoginPage() {
   };
 
   return (
-    <main className="grid min-h-screen md:grid-cols-2">
-      <section className="hidden bg-slate-900 md:block">
+    <main className="grid min-h-screen grid-cols-1 md:grid-cols-2">
+      <section className="relative hidden min-h-[40vh] bg-slate-900 md:block md:min-h-screen">
         <img
           alt="Analytics workspace"
-          className="h-full w-full object-cover"
+          className="absolute inset-0 h-full w-full object-cover"
           loading="lazy"
           src="https://images.unsplash.com/photo-1460925895917-afdab827c52f?q=80&w=1600&auto=format&fit=crop"
         />
       </section>
-      <section className="mx-auto flex w-full max-w-md items-center px-6 py-10">
-        <div className="w-full rounded-2xl border border-slate-800 bg-slate-900 p-6">
-          <h1 className="mb-1 text-3xl font-bold text-white">Welcome Back</h1>
+      <section className="mx-auto flex w-full max-w-md items-center px-4 py-10 sm:px-6">
+        <div className={`w-full ${formCardClass}`}>
+          <h1 className="mb-1 text-2xl font-bold text-white sm:text-3xl">Welcome back</h1>
           <p className="mb-6 text-sm text-slate-300">Log in to manage your links and analytics.</p>
-          <form className="space-y-4" onSubmit={handleSubmit}>
-            <input name="email" type="email" placeholder="Email" required />
-            <input name="password" type="password" placeholder="Password" required />
+          <form className={formFieldGroupClass} onSubmit={handleSubmit}>
+            <div>
+              <label className={formLabelClass} htmlFor="login-email">
+                Email
+              </label>
+              <input
+                autoComplete="email"
+                className={formInputClass}
+                id="login-email"
+                name="email"
+                type="email"
+                required
+                value={emailValue}
+                onChange={(event) => setEmailValue(event.target.value)}
+              />
+            </div>
+            <div>
+              <label className={formLabelClass} htmlFor="login-password">
+                Password
+              </label>
+              <input
+                autoComplete="current-password"
+                className={formInputClass}
+                id="login-password"
+                name="password"
+                type="password"
+                required
+              />
+            </div>
             {error ? <p className="text-sm text-red-400">{error}</p> : null}
-            <button className="w-full bg-indigo-600 text-white hover:bg-indigo-500" disabled={loading} type="submit">
+            {error === "Email is not verified" ? (
+              <p className="text-sm text-amber-300">
+                Please verify your email.{" "}
+                <Link className="underline" href={`/auth/resend-verification?email=${encodeURIComponent(emailValue)}`}>
+                  Resend verification
+                </Link>
+              </p>
+            ) : null}
+            <button className={formButtonPrimaryClass} disabled={loading} type="submit">
               {loading ? "Signing in..." : "Sign in"}
             </button>
           </form>
+          <div className="mt-3 text-right text-xs">
+            <Link className="text-indigo-300 hover:text-indigo-200" href="/auth/forgot-password">
+              Forgot password?
+            </Link>
+          </div>
           <div className="my-4 text-center text-xs text-slate-500">or</div>
           <GoogleButton href={`${API_BASE_URL}/auth/google`} />
           <p className="mt-5 text-sm text-slate-300">

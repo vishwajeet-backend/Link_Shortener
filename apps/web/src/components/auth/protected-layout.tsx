@@ -6,10 +6,11 @@ import { useAuthStore } from "@/store/auth.store";
 
 type Props = {
   children: React.ReactNode;
-  role?: "ADMIN" | "USER";
+  role?: "ADMIN" | "MEMBER" | "ADVERTISER";
+  roles?: Array<"ADMIN" | "MEMBER" | "ADVERTISER">;
 };
 
-export const ProtectedLayout = ({ children, role }: Props) => {
+export const ProtectedLayout = ({ children, role, roles }: Props) => {
   const router = useRouter();
   const pathname = usePathname();
   const { user, isHydrated, hydrate } = useAuthStore();
@@ -24,13 +25,18 @@ export const ProtectedLayout = ({ children, role }: Props) => {
       router.replace("/login");
       return;
     }
-    if (role && user.role !== role) {
+    const allowedRoles = roles ?? (role ? [role] : null);
+    if (allowedRoles && !allowedRoles.includes(user.role)) {
       router.replace(user.role === "ADMIN" ? "/admin" : "/dashboard");
     }
-  }, [isHydrated, pathname, role, router, user]);
+  }, [isHydrated, pathname, role, roles, router, user]);
 
   if (!isHydrated || !user) {
-    return <div className="p-6">Loading...</div>;
+    return (
+      <div className="flex min-h-[40vh] items-center justify-center px-4 py-16">
+        <p className="text-sm text-slate-400 sm:text-base">Loading your workspace…</p>
+      </div>
+    );
   }
 
   return <>{children}</>;

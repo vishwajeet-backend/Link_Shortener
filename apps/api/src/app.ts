@@ -10,6 +10,7 @@ import { errorMiddleware } from "./middlewares/error.middleware";
 import { notFoundMiddleware } from "./middlewares/not-found.middleware";
 import { requestIdMiddleware } from "./middlewares/request-id.middleware";
 import { globalRateLimitMiddleware } from "./middlewares/rate-limit.middleware";
+import { redirectRouter } from "./modules/redirect/redirect.routes";
 import { apiRouter } from "./routes/api.routes";
 
 export const app = express();
@@ -22,6 +23,7 @@ app.use(
   })
 );
 app.use(helmet());
+
 app.use(express.json({ limit: "1mb" }));
 app.use(express.urlencoded({ extended: true }));
 app.use(
@@ -42,6 +44,7 @@ app.use(morgan(env.NODE_ENV === "production" ? "combined" : "dev"));
 app.use(globalRateLimitMiddleware);
 
 app.use(API_PREFIX, apiRouter);
+app.use("/", redirectRouter);
 
 app.use(notFoundMiddleware);
 app.use(errorMiddleware);

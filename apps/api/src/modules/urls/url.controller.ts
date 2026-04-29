@@ -1,7 +1,8 @@
 import { Request, Response } from "express";
 import { StatusCodes } from "http-status-codes";
+import { URL_STATUS } from "../../types/common";
 import { urlService } from "./url.service";
-import type { CreateShortUrlInput, ListUserUrlsQuery } from "./url.types";
+import type { CreateShortUrlInput, ListUserUrlsQuery, UpdateShortUrlInput } from "./url.types";
 
 export class UrlController {
   async createOwnUrl(req: Request, res: Response): Promise<void> {
@@ -20,6 +21,37 @@ export class UrlController {
     const id = String(req.params.id);
     const data = await urlService.getOwnUrlById(req.authUser!.userId, id);
     res.status(StatusCodes.OK).json({ success: true, data });
+  }
+
+  async updateOwnUrl(req: Request, res: Response): Promise<void> {
+    const id = String(req.params.id);
+    const payload = req.body as UpdateShortUrlInput;
+    const data = await urlService.updateOwnUrl(req.authUser!.userId, id, payload);
+    res.status(StatusCodes.OK).json({ success: true, data });
+  }
+
+  async pauseOwnUrl(req: Request, res: Response): Promise<void> {
+    const id = String(req.params.id);
+    const data = await urlService.changeOwnUrlStatus(req.authUser!.userId, id, URL_STATUS.PAUSED);
+    res.status(StatusCodes.OK).json({ success: true, data });
+  }
+
+  async hideOwnUrl(req: Request, res: Response): Promise<void> {
+    const id = String(req.params.id);
+    const data = await urlService.changeOwnUrlStatus(req.authUser!.userId, id, URL_STATUS.HIDDEN);
+    res.status(StatusCodes.OK).json({ success: true, data });
+  }
+
+  async activateOwnUrl(req: Request, res: Response): Promise<void> {
+    const id = String(req.params.id);
+    const data = await urlService.changeOwnUrlStatus(req.authUser!.userId, id, URL_STATUS.ACTIVE);
+    res.status(StatusCodes.OK).json({ success: true, data });
+  }
+
+  async deleteOwnUrl(req: Request, res: Response): Promise<void> {
+    const id = String(req.params.id);
+    await urlService.deleteOwnUrl(req.authUser!.userId, id);
+    res.status(StatusCodes.OK).json({ success: true, data: null });
   }
 }
 

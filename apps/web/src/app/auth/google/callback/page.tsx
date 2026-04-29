@@ -9,7 +9,7 @@ type OAuthPayload = {
     userId: string;
     name: string;
     email: string;
-    role: "ADMIN" | "USER";
+    role: "ADMIN" | "MEMBER" | "ADVERTISER";
   };
   tokens: {
     accessToken: string;

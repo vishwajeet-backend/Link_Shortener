@@ -7,7 +7,7 @@ type User = {
   userId: string;
   name: string;
   email: string;
-  role: "ADMIN" | "USER";
+  role: "ADMIN" | "MEMBER" | "ADVERTISER";
 };
 
 type AuthResponse = {
@@ -15,26 +15,35 @@ type AuthResponse = {
   tokens: { accessToken: string; refreshToken: string };
 };
 
+type RegisterResponse = {
+  user: User;
+  verificationRequired: boolean;
+};
+
 type AuthState = {
   user: User | null;
   accessToken: string | null;
   refreshToken: string | null;
+  pendingEmail: string | null;
   isHydrated: boolean;
   hydrate: () => void;
   login: (input: { email: string; password: string }) => Promise<void>;
   register: (input: { name: string; email: string; password: string }) => Promise<void>;
   logout: () => Promise<void>;
   setSession: (payload: AuthResponse) => void;
+  patchUser: (partial: Partial<Pick<User, "name" | "email">>) => void;
 };
 
 const ACCESS_KEY = "ls_access_token";
 const REFRESH_KEY = "ls_refresh_token";
 const USER_KEY = "ls_user";
+const PENDING_EMAIL_KEY = "ls_pending_email";
 
 export const useAuthStore = create<AuthState>((set, get) => ({
   user: null,
   accessToken: null,
   refreshToken: null,
+  pendingEmail: null,
   isHydrated: false,
   hydrate: () => {
     if (typeof window === "undefined") return;
@@ -42,7 +51,8 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     const refreshToken = localStorage.getItem(REFRESH_KEY);
     const userRaw = localStorage.getItem(USER_KEY);
     const user = userRaw ? (JSON.parse(userRaw) as User) : null;
-    set({ accessToken, refreshToken, user, isHydrated: true });
+    const pendingEmail = localStorage.getItem(PENDING_EMAIL_KEY);
+    set({ accessToken, refreshToken, user, pendingEmail, isHydrated: true });
   },
   login: async ({ email, password }) => {
     const data = await apiRequest<AuthResponse>("/auth/login", {
@@ -53,26 +63,25 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     localStorage.setItem(ACCESS_KEY, data.tokens.accessToken);
     localStorage.setItem(REFRESH_KEY, data.tokens.refreshToken);
     localStorage.setItem(USER_KEY, JSON.stringify(data.user));
+    localStorage.removeItem(PENDING_EMAIL_KEY);
     set({
       user: data.user,
       accessToken: data.tokens.accessToken,
-      refreshToken: data.tokens.refreshToken
+      refreshToken: data.tokens.refreshToken,
+      pendingEmail: null
     });
   },
   register: async ({ name, email, password }) => {
-    const data = await apiRequest<AuthResponse>("/auth/register", {
+    const data = await apiRequest<RegisterResponse>("/auth/register", {
       method: "POST",
       body: { name, email, password }
     });
 
-    localStorage.setItem(ACCESS_KEY, data.tokens.accessToken);
-    localStorage.setItem(REFRESH_KEY, data.tokens.refreshToken);
-    localStorage.setItem(USER_KEY, JSON.stringify(data.user));
-    set({
-      user: data.user,
-      accessToken: data.tokens.accessToken,
-      refreshToken: data.tokens.refreshToken
-    });
+    if (data.verificationRequired) {
+      localStorage.setItem(PENDING_EMAIL_KEY, data.user.email);
+      set({ pendingEmail: data.user.email });
+      return;
+    }
   },
   logout: async () => {
     const { accessToken, refreshToken } = get();
@@ -91,16 +100,26 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     localStorage.removeItem(ACCESS_KEY);
     localStorage.removeItem(REFRESH_KEY);
     localStorage.removeItem(USER_KEY);
-    set({ user: null, accessToken: null, refreshToken: null });
+    localStorage.removeItem(PENDING_EMAIL_KEY);
+    set({ user: null, accessToken: null, refreshToken: null, pendingEmail: null });
   },
   setSession: (payload) => {
     localStorage.setItem(ACCESS_KEY, payload.tokens.accessToken);
     localStorage.setItem(REFRESH_KEY, payload.tokens.refreshToken);
     localStorage.setItem(USER_KEY, JSON.stringify(payload.user));
+    localStorage.removeItem(PENDING_EMAIL_KEY);
     set({
       user: payload.user,
       accessToken: payload.tokens.accessToken,
-      refreshToken: payload.tokens.refreshToken
+      refreshToken: payload.tokens.refreshToken,
+      pendingEmail: null
     });
+  },
+  patchUser: (partial) => {
+    const cur = get().user;
+    if (!cur || typeof window === "undefined") return;
+    const next = { ...cur, ...partial };
+    localStorage.setItem(USER_KEY, JSON.stringify(next));
+    set({ user: next });
   }
 }));

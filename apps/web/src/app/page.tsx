@@ -5,6 +5,11 @@ import { FormEvent, useState } from "react";
 import { useRouter } from "next/navigation";
 import { SiteFooter } from "@/components/marketing/site-footer";
 import { SiteHeader } from "@/components/marketing/site-header";
+import {
+  formButtonPrimaryClass,
+  formInputClass,
+  formLabelClass
+} from "@/components/ui/form-classes";
 import { apiRequest } from "@/lib/api-client";
 import { useAuthStore } from "@/store/auth.store";
 
@@ -98,13 +103,13 @@ export default function HomePage() {
   return (
     <div className="min-h-screen bg-slate-950 text-slate-100">
       <SiteHeader />
-      <main id="home" className="mx-auto max-w-7xl px-4 pb-16 pt-10 md:px-8 md:pt-16">
-        <section className="grid items-center gap-10 md:grid-cols-2">
+      <main id="home" className="mx-auto max-w-7xl px-4 pb-16 pt-8 sm:pt-10 md:px-8 md:pt-16">
+        <section className="grid items-start gap-8 sm:gap-10 md:grid-cols-2 md:items-center">
           <div>
             <p className="mb-3 inline-block rounded-full bg-indigo-950/60 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-indigo-300">
               Trusted by teams and creators
             </p>
-            <h1 className="text-4xl font-extrabold leading-tight text-white md:text-6xl">
+            <h1 className="text-3xl font-extrabold leading-tight text-white sm:text-4xl md:text-5xl lg:text-6xl">
               Shorten, secure, and scale your links globally.
             </h1>
             <p className="mt-4 max-w-xl text-slate-300">
@@ -121,22 +126,28 @@ export default function HomePage() {
             </div>
           </div>
 
-          <div className="rounded-3xl border border-slate-800 bg-slate-900/70 p-5 shadow-2xl md:p-6">
-            <h2 className="text-lg font-semibold text-white">Shorten URL instantly</h2>
+          <div className="rounded-3xl border border-slate-800 bg-slate-900/70 p-5 shadow-2xl sm:p-6">
+            <h2 className="text-lg font-semibold text-white">Shorten a link</h2>
             <p className="mb-4 mt-1 text-sm text-slate-300">
               {user ? `Welcome ${user.name}. Create your next short link.` : "Paste your long URL and create a short link."}
             </p>
-            <form className="space-y-3" onSubmit={onShorten}>
-              <input
-                className="h-11"
-                name="originalUrl"
-                placeholder="https://example.com/your-long-url"
-                required
-                suppressHydrationWarning
-                type="url"
-              />
+            <form className="space-y-4" onSubmit={onShorten}>
+              <div>
+                <label className={formLabelClass} htmlFor="home-original-url">
+                  Destination URL
+                </label>
+                <input
+                  className={formInputClass}
+                  id="home-original-url"
+                  name="originalUrl"
+                  placeholder="https://example.com/your-long-url"
+                  required
+                  suppressHydrationWarning
+                  type="url"
+                />
+              </div>
               <button
-                className="h-11 w-full bg-indigo-600 text-white disabled:opacity-60"
+                className={formButtonPrimaryClass}
                 disabled={submitting}
                 suppressHydrationWarning
                 type="submit"
@@ -151,6 +162,18 @@ export default function HomePage() {
                 <p className="mt-1 break-all text-sm text-emerald-100">{created.shortUrl}</p>
               </div>
             ) : null}
+          </div>
+        </section>
+
+        <section className="mt-10 rounded-2xl border border-slate-800/80 bg-slate-900/40 px-4 py-6 md:mt-12">
+          <p className="text-center text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">
+            Built for production teams
+          </p>
+          <div className="mt-4 flex flex-wrap items-center justify-center gap-x-10 gap-y-3 text-sm text-slate-400">
+            <span>JWT + refresh rotation</span>
+            <span>Role-based admin</span>
+            <span>Click analytics</span>
+            <span>Razorpay-ready billing</span>
           </div>
         </section>
 

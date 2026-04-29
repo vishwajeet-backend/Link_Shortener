@@ -1,13 +1,31 @@
 import { z } from "zod";
-import { URL_STATUS } from "../../types/common";
+import { URL_AD_MODE, URL_STATUS } from "../../types/common";
+
+const aliasRegex = /^[a-zA-Z0-9_-]{5,32}$/;
 
 export const createUrlSchema = {
   body: z.object({
     originalUrl: z.string().trim().min(1).max(2048),
+    customAlias: z.string().trim().regex(aliasRegex).optional(),
+    adMode: z.enum(Object.values(URL_AD_MODE) as [string, ...string[]]).optional(),
     title: z.string().trim().min(1).max(255).optional(),
     description: z.string().trim().min(1).max(1000).optional(),
     expiresAt: z.string().datetime().optional()
   })
+};
+
+export const updateUrlSchema = {
+  body: z
+    .object({
+      originalUrl: z.string().trim().min(1).max(2048).optional(),
+      adMode: z.enum(Object.values(URL_AD_MODE) as [string, ...string[]]).optional(),
+      title: z.string().trim().min(1).max(255).optional(),
+      description: z.string().trim().min(1).max(1000).optional(),
+      expiresAt: z.string().datetime().nullable().optional()
+    })
+    .refine((data) => Object.keys(data).length > 0, {
+      message: "At least one field must be provided"
+    })
 };
 
 export const listUrlsSchema = {
@@ -20,6 +38,12 @@ export const listUrlsSchema = {
 };
 
 export const getMyUrlByIdSchema = {
+  params: z.object({
+    id: z.string().trim().min(1)
+  })
+};
+
+export const urlIdParamsSchema = {
   params: z.object({
     id: z.string().trim().min(1)
   })

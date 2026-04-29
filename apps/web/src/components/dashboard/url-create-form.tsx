@@ -2,6 +2,11 @@
 
 import { FormEvent, useState } from "react";
 import { apiRequest } from "@/lib/api-client";
+import {
+  formButtonPrimaryClass,
+  formInputClass,
+  formLabelClass
+} from "@/components/ui/form-classes";
 import { useAuthStore } from "@/store/auth.store";
 
 type CreatedUrl = {
@@ -48,12 +53,28 @@ export const UrlCreateForm = ({ onCreated }: { onCreated: () => Promise<void> })
   };
 
   return (
-    <div className="rounded-2xl border border-slate-800 bg-slate-900 p-4 md:p-6">
-      <h2 className="mb-1 text-lg font-semibold text-white">Create Short URL</h2>
+    <div className="rounded-2xl border border-slate-800 bg-slate-900 p-4 sm:p-6">
+      <h2 className="mb-1 text-lg font-semibold text-white">Create short URL</h2>
       <p className="mb-4 text-sm text-slate-300">Paste any long URL and generate a shareable link.</p>
-      <form className="flex flex-col gap-3 md:flex-row" onSubmit={handleSubmit}>
-        <input name="originalUrl" placeholder="https://example.com/very-long-url" required />
-        <button className="bg-indigo-600 text-white hover:bg-indigo-500" disabled={loading} type="submit">
+      <form className="flex flex-col gap-3 sm:flex-row sm:items-end" onSubmit={handleSubmit}>
+        <div className="min-w-0 flex-1">
+          <label className={formLabelClass} htmlFor="dash-new-url">
+            Destination URL
+          </label>
+          <input
+            className={formInputClass}
+            id="dash-new-url"
+            name="originalUrl"
+            placeholder="https://example.com/your-long-path"
+            required
+            type="url"
+          />
+        </div>
+        <button
+          className={`${formButtonPrimaryClass} shrink-0 sm:mt-0 sm:w-auto sm:min-w-[8.5rem]`}
+          disabled={loading}
+          type="submit"
+        >
           {loading ? "Shortening..." : "Shorten"}
         </button>
       </form>
@@ -62,15 +83,20 @@ export const UrlCreateForm = ({ onCreated }: { onCreated: () => Promise<void> })
         <div className="mt-3 rounded border border-emerald-700 bg-emerald-950/30 p-3 text-sm">
           <p className="font-medium text-emerald-300">Short URL created</p>
           <p className="mb-2 break-all text-emerald-100">{created.shortUrl}</p>
-          <div className="flex gap-2">
+          <div className="flex flex-wrap gap-2">
             <button
-              className="border border-slate-600"
+              className="rounded-lg border border-slate-600 px-3 py-2 text-sm text-slate-200 hover:bg-slate-800"
               onClick={() => navigator.clipboard.writeText(created.shortUrl)}
               type="button"
             >
               Copy URL
             </button>
-            <a className="rounded border border-slate-600 px-4 py-2" href={created.shortUrl} rel="noreferrer" target="_blank">
+            <a
+              className="rounded-lg border border-slate-600 px-3 py-2 text-sm text-slate-200 hover:bg-slate-800"
+              href={created.shortUrl}
+              rel="noreferrer"
+              target="_blank"
+            >
               Open in new tab
             </a>
           </div>

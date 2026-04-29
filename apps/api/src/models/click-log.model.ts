@@ -6,6 +6,7 @@ export interface ClickLogDocument {
   ownerId: Types.ObjectId;
   timestamp: Date;
   ipAddress: string;
+  ipHash?: string;
   userAgent: string;
   browser?: string;
   os?: string;
@@ -13,6 +14,7 @@ export interface ClickLogDocument {
   referrer?: string;
   country?: string;
   city?: string;
+  isUnique?: boolean;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -24,13 +26,15 @@ const clickLogSchema = new Schema<ClickLogDocument>(
     ownerId: { type: Schema.Types.ObjectId, ref: "User", required: true, index: true },
     timestamp: { type: Date, required: true, default: Date.now, index: true },
     ipAddress: { type: String, required: true, trim: true, maxlength: 128 },
+    ipHash: { type: String, trim: true, index: true },
     userAgent: { type: String, required: true, trim: true, maxlength: 1024 },
     browser: { type: String, trim: true, maxlength: 128 },
     os: { type: String, trim: true, maxlength: 128 },
     deviceType: { type: String, trim: true, maxlength: 64 },
     referrer: { type: String, trim: true, maxlength: 2048 },
     country: { type: String, trim: true, maxlength: 128 },
-    city: { type: String, trim: true, maxlength: 128 }
+    city: { type: String, trim: true, maxlength: 128 },
+    isUnique: { type: Boolean, default: false }
   },
   { timestamps: true, versionKey: false }
 );
@@ -38,6 +42,8 @@ const clickLogSchema = new Schema<ClickLogDocument>(
 clickLogSchema.index({ urlId: 1, timestamp: -1 }, { name: "idx_click_log_url_time" });
 clickLogSchema.index({ ownerId: 1, timestamp: -1 }, { name: "idx_click_log_owner_time" });
 clickLogSchema.index({ shortCode: 1, timestamp: -1 }, { name: "idx_click_log_code_time" });
+clickLogSchema.index({ shortCode: 1, ipHash: 1, timestamp: -1 }, { name: "idx_click_log_unique" });
+clickLogSchema.index({ ownerId: 1, isUnique: 1, timestamp: -1 }, { name: "idx_click_log_owner_unique" });
 
 export const ClickLogModel =
   models.ClickLog || model<ClickLogDocument>("ClickLog", clickLogSchema);

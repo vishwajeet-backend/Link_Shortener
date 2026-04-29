@@ -23,7 +23,14 @@ const envSchema = z.object({
   JWT_ACCESS_SECRET: z.string().min(32, "JWT_ACCESS_SECRET must be at least 32 chars"),
   JWT_REFRESH_SECRET: z.string().min(32, "JWT_REFRESH_SECRET must be at least 32 chars"),
   JWT_ACCESS_EXPIRES_IN: z.string().default("15m"),
-  JWT_REFRESH_EXPIRES_IN_DAYS: z.coerce.number().int().positive().default(7)
+  JWT_REFRESH_EXPIRES_IN_DAYS: z.coerce.number().int().positive().default(7),
+  RAZORPAY_KEY_ID: z.string().optional(),
+  RAZORPAY_KEY_SECRET: z.string().optional(),
+  RAZORPAY_API_BASE: z
+    .string()
+    .url("RAZORPAY_API_BASE must be a valid URL")
+    .default("https://api.razorpay.com/v1"),
+  CONTACT_TO_EMAIL: z.string().email("CONTACT_TO_EMAIL must be a valid email").optional()
 });
 
 const parsedEnv = envSchema.safeParse(process.env);

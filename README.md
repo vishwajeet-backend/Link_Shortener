@@ -44,8 +44,15 @@ npm install
 
 Create:
 
-- `apps/api/.env` (copy from `apps/api/.env.example`)
-- `apps/web/.env.local` (copy from `apps/web/.env.example`)
+- `apps/api/.env` (see `apps/api/.env.example` for all keys)
+- `apps/web/.env.local` (see `apps/web/.env.example`)
+
+Optional bootstrap scripts (after `.env` is configured):
+
+```bash
+npm run seed:plans --workspace @link-shortener/api
+npm run seed:admin --workspace @link-shortener/api
+```
 
 ### 3) Run backend and frontend
 
@@ -86,11 +93,15 @@ http://localhost:5000/api/v1/health
 - `JWT_REFRESH_SECRET`
 - `JWT_ACCESS_EXPIRES_IN`
 - `JWT_REFRESH_EXPIRES_IN_DAYS`
+- `RAZORPAY_KEY_ID` (optional; required for paid checkout — same value as `NEXT_PUBLIC_RAZORPAY_KEY_ID` on the web app)
+- `RAZORPAY_KEY_SECRET` (optional; used to create orders and to **verify** payments after Checkout via `POST /api/v1/payments/razorpay/verify`; no webhook secret)
+- `CONTACT_TO_EMAIL` (optional; enables `POST /api/v1/contact` from the marketing site)
 
 ### Frontend (`apps/web/.env.local`)
 
 - `NEXT_PUBLIC_API_BASE_URL`
 - `NEXT_PUBLIC_APP_URL`
+- `NEXT_PUBLIC_RAZORPAY_KEY_ID` (optional; required for Razorpay Checkout on `/pricing`)
 
 ---
 

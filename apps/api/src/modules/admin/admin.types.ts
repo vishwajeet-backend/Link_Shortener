@@ -1,4 +1,4 @@
-import type { UrlStatus } from "../../types/common";
+import type { CampaignStatus, Role, UrlStatus, UserStatus } from "../../types/common";
 
 export type AdminUrlActionResult = {
   id: string;
@@ -13,7 +13,8 @@ export type AdminUrlActionResult = {
 export type AdminListUsersQuery = {
   page: number;
   limit: number;
-  status?: "ACTIVE" | "BANNED" | "DELETED";
+  status?: UserStatus;
+  role?: Role;
   search?: string;
 };
 
@@ -23,4 +24,12 @@ export type AdminListUrlsQuery = {
   status?: UrlStatus;
   search?: string;
   ownerId?: string;
+};
+
+export type AdminListCampaignsQuery = {
+  page: number;
+  limit: number;
+  status?: CampaignStatus;
+  ownerId?: string;
+  search?: string;
 };

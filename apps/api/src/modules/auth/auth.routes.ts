@@ -11,7 +11,16 @@ import {
 import { validationMiddleware } from "../../middlewares/validation.middleware";
 import { asyncHandler } from "../../utils/async-handler";
 import { authController } from "./auth.controller";
-import { loginSchema, logoutSchema, refreshSchema, registerSchema } from "./auth.validation";
+import {
+  forgotPasswordSchema,
+  loginSchema,
+  logoutSchema,
+  refreshSchema,
+  registerSchema,
+  resendVerificationSchema,
+  resetPasswordSchema,
+  verifyEmailSchema
+} from "./auth.validation";
 
 const authRouter = Router();
 
@@ -48,10 +57,34 @@ authRouter.post(
   asyncHandler((req, res) => authController.register(req, res))
 );
 authRouter.post(
+  "/verify-email",
+  authRateLimitMiddleware,
+  validationMiddleware(verifyEmailSchema),
+  asyncHandler((req, res) => authController.verifyEmail(req, res))
+);
+authRouter.post(
+  "/resend-verification",
+  authRateLimitMiddleware,
+  validationMiddleware(resendVerificationSchema),
+  asyncHandler((req, res) => authController.resendVerification(req, res))
+);
+authRouter.post(
   "/login",
   authRateLimitMiddleware,
   validationMiddleware(loginSchema),
   asyncHandler((req, res) => authController.login(req, res))
+);
+authRouter.post(
+  "/forgot-password",
+  authRateLimitMiddleware,
+  validationMiddleware(forgotPasswordSchema),
+  asyncHandler((req, res) => authController.forgotPassword(req, res))
+);
+authRouter.post(
+  "/reset-password",
+  authRateLimitMiddleware,
+  validationMiddleware(resetPasswordSchema),
+  asyncHandler((req, res) => authController.resetPassword(req, res))
 );
 authRouter.post(
   "/refresh",

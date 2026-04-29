@@ -1,12 +1,11 @@
-import nodemailer from "nodemailer";
 import { Types } from "mongoose";
-import { env } from "../../config/env";
 import { emailLogRepository } from "../../repositories/email-log.repository";
 import {
   EMAIL_DELIVERY_STATUS,
   type EmailEventType,
   type UrlStatus
 } from "../../types/common";
+import { sendEmail } from "../../utils/email";
 import { buildUrlStatusEmailTemplate } from "./mail.templates";
 
 type NotifyUrlStatusChangeInput = {
@@ -18,16 +17,6 @@ type NotifyUrlStatusChangeInput = {
   eventType: EmailEventType;
   status: UrlStatus;
 };
-
-const transporter = nodemailer.createTransport({
-  host: env.SMTP_HOST,
-  port: env.SMTP_PORT,
-  secure: env.SMTP_SECURE,
-  auth: {
-    user: env.SMTP_USER,
-    pass: env.SMTP_PASS
-  }
-});
 
 export class NotificationService {
   async notifyUrlStatusChange(input: NotifyUrlStatusChangeInput): Promise<void> {
@@ -52,8 +41,7 @@ export class NotificationService {
     });
 
     try {
-      const result = await transporter.sendMail({
-        from: `"${env.SMTP_FROM_NAME}" <${env.SMTP_FROM_EMAIL}>`,
+      const result = await sendEmail({
         to: input.recipientEmail,
         subject: template.subject,
         text: template.text,

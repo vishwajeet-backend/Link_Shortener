@@ -3,11 +3,15 @@ import { env } from "../../config/env";
 import { created, ok } from "../../utils/http-response";
 import { authService } from "./auth.service";
 import type {
+  ForgotPasswordInput,
   GoogleLoginInput,
   LoginInput,
   LogoutInput,
   RefreshInput,
-  RegisterInput
+  RegisterInput,
+  ResendVerificationInput,
+  ResetPasswordInput,
+  VerifyEmailInput
 } from "./auth.types";
 
 export class AuthController {
@@ -17,10 +21,34 @@ export class AuthController {
     created(res, result);
   }
 
+  async verifyEmail(req: Request, res: Response): Promise<void> {
+    const payload = req.body as VerifyEmailInput;
+    const result = await authService.verifyEmail(payload);
+    ok(res, result, "Email verified successfully");
+  }
+
+  async resendVerification(req: Request, res: Response): Promise<void> {
+    const payload = req.body as ResendVerificationInput;
+    await authService.resendVerification(payload);
+    ok(res, null, "Verification email sent if the account exists");
+  }
+
   async login(req: Request, res: Response): Promise<void> {
     const payload = req.body as LoginInput;
     const result = await authService.login(payload);
     ok(res, result);
+  }
+
+  async forgotPassword(req: Request, res: Response): Promise<void> {
+    const payload = req.body as ForgotPasswordInput;
+    await authService.forgotPassword(payload);
+    ok(res, null, "Password reset email sent if the account exists");
+  }
+
+  async resetPassword(req: Request, res: Response): Promise<void> {
+    const payload = req.body as ResetPasswordInput;
+    await authService.resetPassword(payload);
+    ok(res, null, "Password reset successfully");
   }
 
   async refresh(req: Request, res: Response): Promise<void> {

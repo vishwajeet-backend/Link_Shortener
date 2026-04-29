@@ -1,11 +1,17 @@
 import { StatusCodes } from "http-status-codes";
 import { randomBytes } from "crypto";
+import {
+  EMAIL_VERIFICATION_TOKEN_TTL_HOURS,
+  PASSWORD_RESET_TOKEN_TTL_HOURS
+} from "../../config/constants";
 import type { HydratedDocument } from "mongoose";
 import { env } from "../../config/env";
 import type { UserDocument } from "../../models/user.model";
 import { userRepository } from "../../repositories/user.repository";
 import { ROLES, USER_STATUS } from "../../types/common";
 import { hashPassword, hashToken, verifyPassword } from "../../utils/hash";
+import { sendEmail } from "../../utils/email";
+import { buildPasswordResetEmail, buildVerificationEmail } from "../../utils/email-templates";
 import {
   signAccessToken,
   signRefreshToken,
@@ -14,11 +20,15 @@ import {
 import type {
   AuthenticatedUser,
   AuthTokens,
-  LoginInput,
+  ForgotPasswordInput,
   GoogleLoginInput,
+  LoginInput,
   LogoutInput,
   RefreshInput,
-  RegisterInput
+  RegisterInput,
+  ResendVerificationInput,
+  ResetPasswordInput,
+  VerifyEmailInput
 } from "./auth.types";
 
 type ServiceError = Error & { statusCode?: number };
@@ -35,8 +45,16 @@ const getFutureDateByDays = (days: number): Date => {
   return date;
 };
 
+const getFutureDateByHours = (hours: number): Date => {
+  const date = new Date();
+  date.setHours(date.getHours() + hours);
+  return date;
+};
+
+const createOneTimeToken = (): string => randomBytes(32).toString("hex");
+
 export class AuthService {
-  async register(input: RegisterInput): Promise<{ user: AuthenticatedUser; tokens: AuthTokens }> {
+  async register(input: RegisterInput): Promise<{ user: AuthenticatedUser; verificationRequired: boolean }> {
     const existing = await userRepository.findByEmail(input.email);
     if (existing) {
       throw buildServiceError("Email is already registered", StatusCodes.CONFLICT);
@@ -47,14 +65,24 @@ export class AuthService {
       name: input.name,
       email: input.email.toLowerCase(),
       passwordHash,
-      role: ROLES.USER
+      role: ROLES.MEMBER
     });
 
-    const tokens = this.createTokenPair(user.id, user.role);
-    this.attachHashedRefreshToken(user, tokens.refreshToken);
+    const verificationToken = createOneTimeToken();
+    user.emailVerificationTokenHash = hashToken(verificationToken);
+    user.emailVerificationExpiresAt = getFutureDateByHours(
+      EMAIL_VERIFICATION_TOKEN_TTL_HOURS
+    );
+    user.isEmailVerified = false;
     await user.save();
 
-    return { user: this.toAuthenticatedUser(user), tokens };
+    const link = `${env.CLIENT_ORIGIN}/auth/verify-email?token=${encodeURIComponent(
+      verificationToken
+    )}`;
+    const email = buildVerificationEmail(user.name, link);
+    await sendEmail({ to: user.email, subject: email.subject, html: email.html, text: email.text });
+
+    return { user: this.toAuthenticatedUser(user), verificationRequired: true };
   }
 
   async login(input: LoginInput): Promise<{ user: AuthenticatedUser; tokens: AuthTokens }> {
@@ -66,6 +94,10 @@ export class AuthService {
     const isValidPassword = await verifyPassword(input.password, user.passwordHash);
     if (!isValidPassword) {
       throw buildServiceError("Invalid email or password", StatusCodes.UNAUTHORIZED);
+    }
+
+    if (!user.isEmailVerified && user.authProvider === "LOCAL") {
+      throw buildServiceError("Email is not verified", StatusCodes.FORBIDDEN);
     }
 
     if (user.status === USER_STATUS.BANNED) {
@@ -93,7 +125,7 @@ export class AuthService {
         name: input.name,
         email: input.email.toLowerCase(),
         passwordHash: generatedPasswordHash,
-        role: ROLES.USER,
+        role: ROLES.MEMBER,
         authProvider: "GOOGLE",
         googleId: input.googleId,
         avatarUrl: input.avatarUrl
@@ -104,6 +136,10 @@ export class AuthService {
       user.avatarUrl = input.avatarUrl;
     }
 
+    user.isEmailVerified = true;
+    user.emailVerificationTokenHash = undefined;
+    user.emailVerificationExpiresAt = undefined;
+
     if (user.status === USER_STATUS.BANNED) {
       throw buildServiceError("User account is banned", StatusCodes.FORBIDDEN);
     }
@@ -113,6 +149,41 @@ export class AuthService {
     }
 
     return this.issueSessionForUser(user);
+  }
+
+  async verifyEmail(input: VerifyEmailInput): Promise<{ user: AuthenticatedUser; tokens: AuthTokens }> {
+    const tokenHash = hashToken(input.token);
+    const user = await userRepository.findByEmailVerificationToken(tokenHash);
+    if (!user) {
+      throw buildServiceError("Verification token is invalid or expired", StatusCodes.UNAUTHORIZED);
+    }
+
+    user.isEmailVerified = true;
+    user.emailVerificationTokenHash = undefined;
+    user.emailVerificationExpiresAt = undefined;
+    await user.save();
+
+    return this.issueSessionForUser(user);
+  }
+
+  async resendVerification(input: ResendVerificationInput): Promise<void> {
+    const user = await userRepository.findByEmail(input.email.toLowerCase());
+    if (!user || user.isEmailVerified) {
+      return;
+    }
+
+    const verificationToken = createOneTimeToken();
+    user.emailVerificationTokenHash = hashToken(verificationToken);
+    user.emailVerificationExpiresAt = getFutureDateByHours(
+      EMAIL_VERIFICATION_TOKEN_TTL_HOURS
+    );
+    await user.save();
+
+    const link = `${env.CLIENT_ORIGIN}/auth/verify-email?token=${encodeURIComponent(
+      verificationToken
+    )}`;
+    const email = buildVerificationEmail(user.name, link);
+    await sendEmail({ to: user.email, subject: email.subject, html: email.html, text: email.text });
   }
 
   async refresh(input: RefreshInput): Promise<AuthTokens> {
@@ -140,6 +211,46 @@ export class AuthService {
     await user.save();
 
     return nextTokens;
+  }
+
+  async forgotPassword(input: ForgotPasswordInput): Promise<void> {
+    const user = await userRepository.findByEmail(input.email.toLowerCase());
+    if (!user) {
+      return;
+    }
+
+    const resetToken = createOneTimeToken();
+    user.passwordResetTokenHash = hashToken(resetToken);
+    user.passwordResetExpiresAt = getFutureDateByHours(
+      PASSWORD_RESET_TOKEN_TTL_HOURS
+    );
+    await user.save();
+
+    const link = `${env.CLIENT_ORIGIN}/auth/reset-password?token=${encodeURIComponent(
+      resetToken
+    )}`;
+    const email = buildPasswordResetEmail(user.name, link);
+    try {
+      await sendEmail({ to: user.email, subject: email.subject, html: email.html, text: email.text });
+    } catch (err) {
+      await userRepository.updatePasswordReset(user.id, { tokenHash: null, expiresAt: null });
+      console.error("forgot-password: email delivery failed", err);
+      throw buildServiceError(
+        "We could not send a reset email. Check your email (SMTP) configuration or try again later.",
+        StatusCodes.BAD_GATEWAY
+      );
+    }
+  }
+
+  async resetPassword(input: ResetPasswordInput): Promise<void> {
+    const tokenHash = hashToken(input.token);
+    const user = await userRepository.findByPasswordResetToken(tokenHash);
+    if (!user) {
+      throw buildServiceError("Reset token is invalid or expired", StatusCodes.UNAUTHORIZED);
+    }
+
+    const passwordHash = await hashPassword(input.password);
+    await userRepository.updatePasswordAndClearTokens(user.id, passwordHash);
   }
 
   async logout(userId: string, input: LogoutInput): Promise<void> {
@@ -214,7 +325,8 @@ export class AuthService {
       userId: user.id,
       name: user.name,
       email: user.email,
-      role: user.role
+      role: user.role,
+      isEmailVerified: user.isEmailVerified
     };
   }
 }

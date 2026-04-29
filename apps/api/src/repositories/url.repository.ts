@@ -1,6 +1,6 @@
 import { FilterQuery, HydratedDocument, isValidObjectId } from "mongoose";
 import { ShortUrlModel, type ShortUrlDocument } from "../models/short-url.model";
-import { URL_STATUS, type UrlStatus } from "../types/common";
+import { URL_STATUS, type UrlAdMode, type UrlStatus } from "../types/common";
 
 type ShortUrlEntity = HydratedDocument<ShortUrlDocument>;
 
@@ -19,6 +19,8 @@ export class UrlRepository {
     shortCode: string;
     originalUrl: string;
     normalizedUrl: string;
+    adMode: UrlAdMode;
+    isCustomAlias: boolean;
     title?: string;
     description?: string;
     expiresAt?: Date;
@@ -28,6 +30,8 @@ export class UrlRepository {
       shortCode: input.shortCode,
       originalUrl: input.originalUrl,
       normalizedUrl: input.normalizedUrl,
+      adMode: input.adMode,
+      isCustomAlias: input.isCustomAlias,
       title: input.title,
       description: input.description,
       expiresAt: input.expiresAt
@@ -59,6 +63,10 @@ export class UrlRepository {
     ]);
 
     return { data, total };
+  }
+
+  async countByOwner(ownerId: string): Promise<number> {
+    return ShortUrlModel.countDocuments({ ownerId }).exec();
   }
 
   async listAllWithFilters(input: {
@@ -102,7 +110,21 @@ export class UrlRepository {
     if (!isValidObjectId(urlId)) return null;
     return ShortUrlModel.findByIdAndUpdate(
       urlId,
-      { $set: { status, deletedAt: status === URL_STATUS.DELETED ? new Date() : undefined } },
+      {
+        $set: {
+          status,
+          deletedAt: status === URL_STATUS.DELETED ? new Date() : undefined
+        }
+      },
+      { new: true }
+    ).exec();
+  }
+
+  async updateByOwner(urlId: string, ownerId: string, update: Partial<ShortUrlDocument>): Promise<ShortUrlEntity | null> {
+    if (!isValidObjectId(urlId)) return null;
+    return ShortUrlModel.findOneAndUpdate(
+      { _id: urlId, ownerId },
+      { $set: update },
       { new: true }
     ).exec();
   }

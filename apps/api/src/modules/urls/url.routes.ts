@@ -2,16 +2,23 @@ import { Router } from "express";
 import {
   authMiddleware,
   ensureActiveUser,
+  ensureVerifiedUser,
   requireAuthenticatedUser
 } from "../../middlewares/auth.middleware";
 import { validationMiddleware } from "../../middlewares/validation.middleware";
 import { asyncHandler } from "../../utils/async-handler";
 import { urlController } from "./url.controller";
-import { createUrlSchema, getMyUrlByIdSchema, listUrlsSchema } from "./url.validation";
+import {
+  createUrlSchema,
+  getMyUrlByIdSchema,
+  listUrlsSchema,
+  updateUrlSchema,
+  urlIdParamsSchema
+} from "./url.validation";
 
 const urlRouter = Router();
 
-urlRouter.use(authMiddleware, requireAuthenticatedUser, ensureActiveUser);
+urlRouter.use(authMiddleware, requireAuthenticatedUser, ensureActiveUser, ensureVerifiedUser);
 
 urlRouter.post(
   "/",
@@ -27,6 +34,31 @@ urlRouter.get(
   "/:id",
   validationMiddleware(getMyUrlByIdSchema),
   asyncHandler((req, res) => urlController.getOwnUrlById(req, res))
+);
+urlRouter.patch(
+  "/:id",
+  validationMiddleware({ ...getMyUrlByIdSchema, ...updateUrlSchema }),
+  asyncHandler((req, res) => urlController.updateOwnUrl(req, res))
+);
+urlRouter.post(
+  "/:id/pause",
+  validationMiddleware(urlIdParamsSchema),
+  asyncHandler((req, res) => urlController.pauseOwnUrl(req, res))
+);
+urlRouter.post(
+  "/:id/hide",
+  validationMiddleware(urlIdParamsSchema),
+  asyncHandler((req, res) => urlController.hideOwnUrl(req, res))
+);
+urlRouter.post(
+  "/:id/activate",
+  validationMiddleware(urlIdParamsSchema),
+  asyncHandler((req, res) => urlController.activateOwnUrl(req, res))
+);
+urlRouter.delete(
+  "/:id",
+  validationMiddleware(urlIdParamsSchema),
+  asyncHandler((req, res) => urlController.deleteOwnUrl(req, res))
 );
 
 export { urlRouter };

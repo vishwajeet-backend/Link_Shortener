@@ -8,6 +8,14 @@ export type RedirectResolution =
       message: string;
     }
   | {
+      outcome: "HIDDEN";
+      message: string;
+    }
+  | {
+      outcome: "DELETED";
+      message: string;
+    }
+  | {
       outcome: "NOT_FOUND";
       message: string;
     };

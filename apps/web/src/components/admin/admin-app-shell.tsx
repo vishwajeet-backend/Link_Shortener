@@ -9,7 +9,12 @@ const nav = [
   { href: "/admin", label: "Dashboard" },
   { href: "/admin/clicks", label: "Clicks" },
   { href: "/admin/urls", label: "All URLs" },
-  { href: "/admin/users", label: "Users" }
+  { href: "/admin/users", label: "Users" },
+  { href: "/admin/plans", label: "Plans" },
+  { href: "/admin/invoices", label: "Invoices" },
+  { href: "/admin/withdrawals", label: "Withdrawals" },
+  { href: "/admin/profile", label: "Profile" },
+  { href: "/admin/settings", label: "Settings" }
 ] as const;
 
 function MenuIcon({ open }: { open: boolean }) {

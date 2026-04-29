@@ -15,6 +15,18 @@ export const loginSchema = {
   })
 };
 
+export const verifyEmailSchema = {
+  body: z.object({
+    token: z.string().min(1)
+  })
+};
+
+export const resendVerificationSchema = {
+  body: z.object({
+    email: z.string().trim().email().max(255)
+  })
+};
+
 export const refreshSchema = {
   body: z.object({
     refreshToken: z.string().min(1)
@@ -24,5 +36,18 @@ export const refreshSchema = {
 export const logoutSchema = {
   body: z.object({
     refreshToken: z.string().min(1)
+  })
+};
+
+export const forgotPasswordSchema = {
+  body: z.object({
+    email: z.string().trim().email().max(255)
+  })
+};
+
+export const resetPasswordSchema = {
+  body: z.object({
+    token: z.string().min(1),
+    password: z.string().min(8).max(128)
   })
 };

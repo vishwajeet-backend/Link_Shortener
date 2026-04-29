@@ -72,3 +72,28 @@ export const ensureActiveUser = async (
 
   next();
 };
+
+export const ensureVerifiedUser = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+): Promise<void> => {
+  if (!req.authUser) {
+    res.status(StatusCodes.UNAUTHORIZED).json({
+      success: false,
+      message: "Authentication required"
+    });
+    return;
+  }
+
+  const user = await userRepository.findById(req.authUser.userId);
+  if (!user || !user.isEmailVerified) {
+    res.status(StatusCodes.FORBIDDEN).json({
+      success: false,
+      message: "Email verification required"
+    });
+    return;
+  }
+
+  next();
+};

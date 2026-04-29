@@ -5,10 +5,11 @@ import { describe, expect, it, vi } from "vitest";
 vi.mock("../middlewares/auth.middleware", () => ({
   authMiddleware: (_req: unknown, _res: unknown, next: () => void) => next(),
   requireAuthenticatedUser: (req: { authUser?: { userId: string; role: string } }, _res: unknown, next: () => void) => {
-    req.authUser = { userId: "u1", role: "USER" };
+    req.authUser = { userId: "u1", role: "MEMBER" };
     next();
   },
-  ensureActiveUser: (_req: unknown, _res: unknown, next: () => void) => next()
+  ensureActiveUser: (_req: unknown, _res: unknown, next: () => void) => next(),
+  ensureVerifiedUser: (_req: unknown, _res: unknown, next: () => void) => next()
 }));
 
 const listSpy = vi.fn(async (_req, res) => {

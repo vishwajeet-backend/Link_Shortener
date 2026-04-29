@@ -6,15 +6,33 @@ import { urlRouter } from "../modules/urls/url.routes";
 import { redirectRouter } from "../modules/redirect/redirect.routes";
 import { analyticsRouter } from "../modules/analytics/analytics.routes";
 import { adminRouter } from "../modules/admin/admin.routes";
+import { campaignRouter } from "../modules/campaigns/campaign.routes";
+import { planRouter } from "../modules/plans/plan.routes";
+import { subscriptionRouter } from "../modules/subscriptions/subscription.routes";
+import { invoiceRouter } from "../modules/invoices/invoice.routes";
+import { paymentRouter } from "../modules/payments/payment.routes";
+import { walletRouter } from "../modules/wallet/wallet.routes";
+import { withdrawalRouter } from "../modules/withdrawals/withdrawal.routes";
+import { adminSettingsRouter } from "../modules/admin-settings/admin-settings.routes";
+import { contactRouter } from "../modules/contact/contact.routes";
 
 const apiRouter = Router();
 
 apiRouter.use("/health", healthRouter);
+apiRouter.use("/contact", contactRouter);
 apiRouter.use("/auth", authRouter);
 apiRouter.use("/users", userRouter);
 apiRouter.use("/urls", urlRouter);
 apiRouter.use("/r", redirectRouter);
 apiRouter.use("/analytics", analyticsRouter);
 apiRouter.use("/admin", adminRouter);
+apiRouter.use("/campaigns", campaignRouter);
+apiRouter.use("/plans", planRouter);
+apiRouter.use("/subscriptions", subscriptionRouter);
+apiRouter.use("/invoices", invoiceRouter);
+apiRouter.use("/payments", paymentRouter);
+apiRouter.use("/wallet", walletRouter);
+apiRouter.use("/withdrawals", withdrawalRouter);
+apiRouter.use("/admin/settings", adminSettingsRouter);
 
 export { apiRouter };

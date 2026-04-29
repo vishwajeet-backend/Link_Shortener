@@ -8,7 +8,8 @@ vi.mock("../middlewares/auth.middleware", () => ({
     req.authUser = { userId: "u1", role: "ADMIN" };
     next();
   },
-  ensureActiveUser: (_req: unknown, _res: unknown, next: () => void) => next()
+  ensureActiveUser: (_req: unknown, _res: unknown, next: () => void) => next(),
+  ensureVerifiedUser: (_req: unknown, _res: unknown, next: () => void) => next()
 }));
 
 vi.mock("../middlewares/rbac.middleware", () => ({

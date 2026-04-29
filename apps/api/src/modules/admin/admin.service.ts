@@ -1,9 +1,21 @@
 import { StatusCodes } from "http-status-codes";
 import { notificationService } from "../notifications/notification.service";
+import { campaignRepository } from "../../repositories/campaign.repository";
 import { userRepository } from "../../repositories/user.repository";
 import { urlRepository } from "../../repositories/url.repository";
-import { EMAIL_EVENT_TYPE, URL_STATUS, USER_STATUS } from "../../types/common";
-import type { AdminListUrlsQuery, AdminListUsersQuery, AdminUrlActionResult } from "./admin.types";
+import {
+  EMAIL_EVENT_TYPE,
+  URL_STATUS,
+  USER_STATUS,
+  type CampaignStatus,
+  type Role
+} from "../../types/common";
+import type {
+  AdminListCampaignsQuery,
+  AdminListUrlsQuery,
+  AdminListUsersQuery,
+  AdminUrlActionResult
+} from "./admin.types";
 
 type ServiceError = Error & { statusCode?: number };
 
@@ -21,6 +33,7 @@ export class AdminService {
       email: string;
       role: string;
       status: string;
+      isEmailVerified: boolean;
       createdAt: Date;
       updatedAt: Date;
     }>;
@@ -34,6 +47,7 @@ export class AdminService {
         email: user.email,
         role: user.role,
         status: user.status,
+        isEmailVerified: user.isEmailVerified,
         createdAt: user.createdAt,
         updatedAt: user.updatedAt
       })),
@@ -46,7 +60,10 @@ export class AdminService {
     };
   }
 
-  async banUser(userId: string): Promise<{ id: string; status: string }> {
+  async banUser(actorUserId: string, userId: string): Promise<{ id: string; status: string }> {
+    if (actorUserId === userId) {
+      throw buildServiceError("You cannot ban your own account", StatusCodes.BAD_REQUEST);
+    }
     const user = await userRepository.findById(userId);
     if (!user) {
       throw buildServiceError("User not found", StatusCodes.NOT_FOUND);
@@ -58,7 +75,10 @@ export class AdminService {
     return { id: updated.id, status: updated.status };
   }
 
-  async deleteUser(userId: string): Promise<{ id: string; status: string }> {
+  async deleteUser(actorUserId: string, userId: string): Promise<{ id: string; status: string }> {
+    if (actorUserId === userId) {
+      throw buildServiceError("You cannot delete your own account", StatusCodes.BAD_REQUEST);
+    }
     const user = await userRepository.findById(userId);
     if (!user) {
       throw buildServiceError("User not found", StatusCodes.NOT_FOUND);
@@ -68,6 +88,93 @@ export class AdminService {
       throw buildServiceError("Unable to delete user", StatusCodes.INTERNAL_SERVER_ERROR);
     }
     return { id: updated.id, status: updated.status };
+  }
+
+  async getUserById(userId: string): Promise<{
+    id: string;
+    name: string;
+    email: string;
+    role: string;
+    status: string;
+    isEmailVerified: boolean;
+    createdAt: Date;
+    updatedAt: Date;
+  }> {
+    const user = await userRepository.findById(userId);
+    if (!user) {
+      throw buildServiceError("User not found", StatusCodes.NOT_FOUND);
+    }
+
+    return {
+      id: user.id,
+      name: user.name,
+      email: user.email,
+      role: user.role,
+      status: user.status,
+      isEmailVerified: user.isEmailVerified,
+      createdAt: user.createdAt,
+      updatedAt: user.updatedAt
+    };
+  }
+
+  async updateUserRole(actorUserId: string, userId: string, role: Role): Promise<{ id: string; role: string }> {
+    if (actorUserId === userId) {
+      throw buildServiceError("You cannot change your own role", StatusCodes.BAD_REQUEST);
+    }
+    const user = await userRepository.findById(userId);
+    if (!user) {
+      throw buildServiceError("User not found", StatusCodes.NOT_FOUND);
+    }
+
+    const updated = await userRepository.updateRole(userId, role);
+    if (!updated) {
+      throw buildServiceError("Unable to update user role", StatusCodes.INTERNAL_SERVER_ERROR);
+    }
+
+    return { id: updated.id, role: updated.role };
+  }
+
+  async updateUserStatus(
+    actorUserId: string,
+    userId: string,
+    status: (typeof USER_STATUS)[keyof typeof USER_STATUS]
+  ): Promise<{ id: string; status: string }> {
+    if (
+      actorUserId === userId &&
+      (status === USER_STATUS.BANNED || status === USER_STATUS.DELETED)
+    ) {
+      throw buildServiceError("You cannot set your own account to this status", StatusCodes.BAD_REQUEST);
+    }
+    const user = await userRepository.findById(userId);
+    if (!user) {
+      throw buildServiceError("User not found", StatusCodes.NOT_FOUND);
+    }
+
+    const updated = await userRepository.updateStatus(userId, status);
+    if (!updated) {
+      throw buildServiceError("Unable to update user status", StatusCodes.INTERNAL_SERVER_ERROR);
+    }
+
+    return { id: updated.id, status: updated.status };
+  }
+
+  async verifyUserEmail(userId: string): Promise<{ id: string; isEmailVerified: boolean }> {
+    const user = await userRepository.findById(userId);
+    if (!user) {
+      throw buildServiceError("User not found", StatusCodes.NOT_FOUND);
+    }
+
+    const updated = await userRepository.updateEmailVerification(userId, {
+      tokenHash: null,
+      expiresAt: null,
+      isEmailVerified: true
+    });
+
+    if (!updated) {
+      throw buildServiceError("Unable to verify user email", StatusCodes.INTERNAL_SERVER_ERROR);
+    }
+
+    return { id: updated.id, isEmailVerified: updated.isEmailVerified };
   }
 
   async listUrls(query: AdminListUrlsQuery): Promise<{
@@ -114,6 +221,113 @@ export class AdminService {
 
   async deleteUrl(urlId: string): Promise<AdminUrlActionResult> {
     return this.changeUrlStatus(urlId, URL_STATUS.DELETED);
+  }
+
+  async listCampaigns(query: AdminListCampaignsQuery): Promise<{
+    items: Array<{
+      id: string;
+      ownerId: string;
+      name: string;
+      type: string;
+      status: string;
+      budgetTotal: number;
+      budgetSpent: number;
+      createdAt: Date;
+      updatedAt: Date;
+    }>;
+    pagination: { page: number; limit: number; total: number; totalPages: number };
+  }> {
+    const { data, total } = await campaignRepository.listAll(query);
+    return {
+      items: data.map((campaign) => ({
+        id: campaign.id,
+        ownerId: String(campaign.ownerId),
+        name: campaign.name,
+        type: campaign.type,
+        status: campaign.status,
+        budgetTotal: campaign.budgetTotal,
+        budgetSpent: campaign.budgetSpent,
+        createdAt: campaign.createdAt,
+        updatedAt: campaign.updatedAt
+      })),
+      pagination: {
+        page: query.page,
+        limit: query.limit,
+        total,
+        totalPages: Math.max(1, Math.ceil(total / query.limit))
+      }
+    };
+  }
+
+  async getCampaign(campaignId: string): Promise<{
+    id: string;
+    ownerId: string;
+    name: string;
+    type: string;
+    status: string;
+    budgetTotal: number;
+    budgetSpent: number;
+    landingUrl?: string;
+    creativeTitle?: string;
+    creativeBody?: string;
+    creativeCta?: string;
+    creativeImageUrl?: string;
+    creativeVideoUrl?: string;
+    targetDevice: string;
+    targetCountries?: string[];
+    targetExcludeCountries?: string[];
+    targetBrowsers?: string[];
+    targetOs?: string[];
+    targetLanguages?: string[];
+    createdAt: Date;
+    updatedAt: Date;
+  }> {
+    const campaign = await campaignRepository.findById(campaignId);
+    if (!campaign) {
+      throw buildServiceError("Campaign not found", StatusCodes.NOT_FOUND);
+    }
+
+    return {
+      id: campaign.id,
+      ownerId: String(campaign.ownerId),
+      name: campaign.name,
+      type: campaign.type,
+      status: campaign.status,
+      budgetTotal: campaign.budgetTotal,
+      budgetSpent: campaign.budgetSpent,
+      landingUrl: campaign.landingUrl,
+      creativeTitle: campaign.creativeTitle,
+      creativeBody: campaign.creativeBody,
+      creativeCta: campaign.creativeCta,
+      creativeImageUrl: campaign.creativeImageUrl,
+      creativeVideoUrl: campaign.creativeVideoUrl,
+      targetDevice: campaign.targetDevice,
+      targetCountries: campaign.targetCountries,
+      targetExcludeCountries: campaign.targetExcludeCountries,
+      targetBrowsers: campaign.targetBrowsers,
+      targetOs: campaign.targetOs,
+      targetLanguages: campaign.targetLanguages,
+      createdAt: campaign.createdAt,
+      updatedAt: campaign.updatedAt
+    };
+  }
+
+  async updateCampaignStatus(
+    campaignId: string,
+    status: CampaignStatus,
+    moderatorId: string,
+    moderationNote?: string
+  ): Promise<{ id: string; status: string }> {
+    const updated = await campaignRepository.updateStatusById(campaignId, status, {
+      moderationNote,
+      moderatedBy: moderatorId,
+      moderatedAt: new Date()
+    });
+    if (!updated) {
+      throw buildServiceError("Campaign not found", StatusCodes.NOT_FOUND);
+    }
+
+    return { id: updated.id, status: updated.status };
   }
 
   private async changeUrlStatus(urlId: string, targetStatus: typeof URL_STATUS[keyof typeof URL_STATUS]) {

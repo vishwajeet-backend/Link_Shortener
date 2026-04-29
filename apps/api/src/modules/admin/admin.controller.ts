@@ -1,7 +1,7 @@
 import { Request, Response } from "express";
 import { StatusCodes } from "http-status-codes";
 import { adminService } from "./admin.service";
-import type { AdminListUrlsQuery, AdminListUsersQuery } from "./admin.types";
+import type { AdminListCampaignsQuery, AdminListUrlsQuery, AdminListUsersQuery } from "./admin.types";
 
 export class AdminController {
   async listUsers(req: Request, res: Response): Promise<void> {
@@ -10,12 +10,36 @@ export class AdminController {
   }
 
   async banUser(req: Request, res: Response): Promise<void> {
-    const data = await adminService.banUser(String(req.params.id));
+    const data = await adminService.banUser(req.authUser!.userId, String(req.params.id));
     res.status(StatusCodes.OK).json({ success: true, data });
   }
 
   async deleteUser(req: Request, res: Response): Promise<void> {
-    const data = await adminService.deleteUser(String(req.params.id));
+    const data = await adminService.deleteUser(req.authUser!.userId, String(req.params.id));
+    res.status(StatusCodes.OK).json({ success: true, data });
+  }
+
+  async getUser(req: Request, res: Response): Promise<void> {
+    const data = await adminService.getUserById(String(req.params.id));
+    res.status(StatusCodes.OK).json({ success: true, data });
+  }
+
+  async updateUserRole(req: Request, res: Response): Promise<void> {
+    const data = await adminService.updateUserRole(req.authUser!.userId, String(req.params.id), req.body.role);
+    res.status(StatusCodes.OK).json({ success: true, data });
+  }
+
+  async updateUserStatus(req: Request, res: Response): Promise<void> {
+    const data = await adminService.updateUserStatus(
+      req.authUser!.userId,
+      String(req.params.id),
+      req.body.status
+    );
+    res.status(StatusCodes.OK).json({ success: true, data });
+  }
+
+  async verifyUserEmail(req: Request, res: Response): Promise<void> {
+    const data = await adminService.verifyUserEmail(String(req.params.id));
     res.status(StatusCodes.OK).json({ success: true, data });
   }
 
@@ -36,6 +60,26 @@ export class AdminController {
 
   async deleteUrl(req: Request, res: Response): Promise<void> {
     const data = await adminService.deleteUrl(String(req.params.id));
+    res.status(StatusCodes.OK).json({ success: true, data });
+  }
+
+  async listCampaigns(req: Request, res: Response): Promise<void> {
+    const data = await adminService.listCampaigns(req.query as unknown as AdminListCampaignsQuery);
+    res.status(StatusCodes.OK).json({ success: true, data });
+  }
+
+  async getCampaign(req: Request, res: Response): Promise<void> {
+    const data = await adminService.getCampaign(String(req.params.id));
+    res.status(StatusCodes.OK).json({ success: true, data });
+  }
+
+  async updateCampaignStatus(req: Request, res: Response): Promise<void> {
+    const data = await adminService.updateCampaignStatus(
+      String(req.params.id),
+      req.body.status,
+      req.authUser!.userId,
+      req.body.moderationNote
+    );
     res.status(StatusCodes.OK).json({ success: true, data });
   }
 }

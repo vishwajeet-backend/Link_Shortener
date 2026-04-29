@@ -1,11 +1,20 @@
 import { model, models, Schema, Types } from "mongoose";
-import { ROLES, URL_STATUS, type Role, type UrlStatus } from "../types/common";
+import {
+  ROLES,
+  URL_AD_MODE,
+  URL_STATUS,
+  type Role,
+  type UrlAdMode,
+  type UrlStatus
+} from "../types/common";
 
 export interface ShortUrlDocument {
   ownerId: Types.ObjectId;
   shortCode: string;
   originalUrl: string;
   normalizedUrl: string;
+  adMode: UrlAdMode;
+  isCustomAlias: boolean;
   status: UrlStatus;
   title?: string;
   description?: string;
@@ -38,6 +47,13 @@ const shortUrlSchema = new Schema<ShortUrlDocument>(
       required: true,
       index: true
     },
+    adMode: {
+      type: String,
+      enum: Object.values(URL_AD_MODE),
+      default: URL_AD_MODE.DIRECT,
+      required: true
+    },
+    isCustomAlias: { type: Boolean, default: false },
     title: { type: String, trim: true, maxlength: 255 },
     description: { type: String, trim: true, maxlength: 1000 },
     clickCount: { type: Number, default: 0, min: 0 },
@@ -47,7 +63,7 @@ const shortUrlSchema = new Schema<ShortUrlDocument>(
       type: String,
       enum: Object.values(ROLES),
       required: true,
-      default: ROLES.USER
+      default: ROLES.MEMBER
     },
     deletedAt: { type: Date }
   },

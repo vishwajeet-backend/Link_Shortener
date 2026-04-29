@@ -10,7 +10,8 @@
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
     "test:watch": "vitest",
-    "seed:admin": "tsx src/scripts/seed-admin.ts"
+    "seed:admin": "tsx src/scripts/seed-admin.ts",
+    "seed:plans": "tsx src/scripts/seed-plans.ts"
   },
   "dependencies": {
     "bcryptjs": "^3.0.3",

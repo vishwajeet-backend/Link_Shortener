@@ -1,10 +1,20 @@
-import type { UrlStatus } from "../../types/common";
+import type { UrlAdMode, UrlStatus } from "../../types/common";
 
 export type CreateShortUrlInput = {
   originalUrl: string;
+  customAlias?: string;
+  adMode?: UrlAdMode;
   title?: string;
   description?: string;
   expiresAt?: string;
+};
+
+export type UpdateShortUrlInput = {
+  originalUrl?: string;
+  adMode?: UrlAdMode;
+  title?: string;
+  description?: string;
+  expiresAt?: string | null;
 };
 
 export type ListUserUrlsQuery = {
@@ -20,6 +30,8 @@ export type UrlListItem = {
   shortUrl: string;
   originalUrl: string;
   normalizedUrl: string;
+  adMode: UrlAdMode;
+  isCustomAlias: boolean;
   status: UrlStatus;
   clickCount: number;
   title?: string;

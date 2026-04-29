@@ -20,6 +20,10 @@ export interface UserDocument {
   role: Role;
   status: UserStatus;
   isEmailVerified: boolean;
+  emailVerificationTokenHash?: string;
+  emailVerificationExpiresAt?: Date;
+  passwordResetTokenHash?: string;
+  passwordResetExpiresAt?: Date;
   lastLoginAt?: Date;
   refreshTokens: RefreshTokenSubdocument[];
   createdAt: Date;
@@ -56,7 +60,7 @@ const userSchema = new Schema<UserDocument>(
     role: {
       type: String,
       enum: Object.values(ROLES),
-      default: ROLES.USER,
+      default: ROLES.MEMBER,
       required: true
     },
     status: {
@@ -66,6 +70,10 @@ const userSchema = new Schema<UserDocument>(
       required: true
     },
     isEmailVerified: { type: Boolean, default: false },
+    emailVerificationTokenHash: { type: String, trim: true, index: true },
+    emailVerificationExpiresAt: { type: Date },
+    passwordResetTokenHash: { type: String, trim: true, index: true },
+    passwordResetExpiresAt: { type: Date },
     lastLoginAt: { type: Date },
     refreshTokens: { type: [refreshTokenSchema], default: [] }
   },

@@ -26,7 +26,10 @@ const bootstrapAdmin = async (): Promise<void> => {
         name,
         passwordHash,
         role: ROLES.ADMIN,
-        status: USER_STATUS.ACTIVE
+        status: USER_STATUS.ACTIVE,
+        isEmailVerified: true,
+        emailVerificationTokenHash: null,
+        emailVerificationExpiresAt: null
       }
     },
     { upsert: true }

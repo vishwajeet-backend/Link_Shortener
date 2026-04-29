@@ -1,0 +1,84 @@
+"use client";
+
+import Link from "next/link";
+import { useEffect, useMemo, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
+import { apiRequest } from "@/lib/api-client";
+import { useAuthStore } from "@/store/auth.store";
+
+type VerifyResponse = {
+  user: {
+    userId: string;
+    name: string;
+    email: string;
+    role: "ADMIN" | "MEMBER" | "ADVERTISER";
+  };
+  tokens: { accessToken: string; refreshToken: string };
+};
+
+export default function VerifyEmailPage() {
+  const router = useRouter();
+  const params = useSearchParams();
+  const setSession = useAuthStore((state) => state.setSession);
+  const pendingEmail = useAuthStore((state) => state.pendingEmail);
+
+  const token = useMemo(() => params.get("token"), [params]);
+  const email = useMemo(() => params.get("email"), [params]);
+
+  const [status, setStatus] = useState<"idle" | "verifying" | "success" | "error">("idle");
+  const [message, setMessage] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!token) return;
+
+    const run = async () => {
+      setStatus("verifying");
+      setMessage(null);
+      try {
+        const data = await apiRequest<VerifyResponse>("/auth/verify-email", {
+          method: "POST",
+          body: { token }
+        });
+        setSession(data);
+        setStatus("success");
+        router.replace(data.user.role === "ADMIN" ? "/admin" : "/dashboard");
+      } catch (err) {
+        setStatus("error");
+        setMessage(err instanceof Error ? err.message : "Verification failed");
+      }
+    };
+
+    void run();
+  }, [router, setSession, token]);
+
+  const showEmail = email ?? pendingEmail ?? "";
+
+  return (
+    <main className="mx-auto flex min-h-screen max-w-xl items-center justify-center px-4 py-10 text-center sm:px-6">
+      <div className="w-full rounded-2xl border border-slate-800 bg-slate-900/90 p-5 shadow-sm sm:p-6">
+        <h1 className="text-2xl font-semibold text-white">Verify your email</h1>
+        <p className="mt-2 text-sm text-slate-300">
+          {showEmail
+            ? `We sent a verification link to ${showEmail}. Open the email and click the link to continue.`
+            : "We sent a verification link to your email address."}
+        </p>
+
+        {status === "verifying" ? (
+          <p className="mt-4 text-sm text-slate-400">Verifying your email...</p>
+        ) : null}
+        {status === "error" ? (
+          <p className="mt-4 text-sm text-red-400">{message ?? "Verification failed."}</p>
+        ) : null}
+
+        <div className="mt-6 flex flex-col gap-2">
+          <Link className="rounded-xl border border-slate-700 px-4 py-2 text-sm text-slate-200" href="/auth/resend-verification">
+            Resend verification email
+          </Link>
+          <Link className="text-sm text-indigo-300 hover:text-indigo-200" href="/login">
+            Back to login
+          </Link>
+        </div>
+      </div>
+    </main>
+  );
+}
